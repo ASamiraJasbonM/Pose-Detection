@@ -1,0 +1,10 @@
+imutils
+matplotlib
+mediapipe
+numpy
+opencv-python
+pandas
+Pillow
+scikit-learn
+moviepy
+openpyxl
