@@ -1,80 +1,235 @@
-# Perfect-Tesis-pose-detection
+# Pose Detection - Sistema de Análisis de Posturas
 
-Este proyecto es una aplicación de escritorio para la detección y análisis de poses corporales en tiempo real y desde archivos de video. Utiliza MediaPipe para la detección de puntos de referencia del cuerpo y calcula ángulos en las articulaciones para generar reportes y gráficas del movimiento.
+Sistema de detección y análisis de poses corporales en tiempo real utilizando MediaPipe y OpenCV. Proyecto refactorizado con arquitectura modular para mejor mantenibilidad.
 
 ## Características
 
-- Detección de pose en tiempo real desde la cámara web.
-- Análisis de pose desde archivos de video.
-- Cálculo de ángulos para hombros, codos y muñecas en diferentes planos (XY, XZ, ZY).
-- Generación de reportes detallados con estadísticas de los ángulos y aceleraciones (media, std, min, max, etc.).
-- Creación de gráficas para visualizar los ángulos y aceleraciones a lo largo del tiempo.
-- Interfaz gráfica de usuario (GUI) para un manejo sencillo de las funcionalidades.
+- Detección de pose en tiempo real desde cámara web
+- Análisis de pose desde archivos de video
+- Cálculo de ángulos para articulaciones en diferentes planos (XY, XZ, ZY)
+- Generación de reportes estadísticos detallados
+- Visualización de datos con gráficas interactivas
+- Interfaz gráfica moderna con ttkbootstrap
+- Suite de tests automatizados
+- Soporte para Docker
+
+## Requisitos
+
+- Python 3.9+
+- Webcam (para detección en tiempo real)
+- Sistema operativo: Windows, macOS o Linux
 
 ## Instalación
 
-1.  **Clona el repositorio (si aplica):**
-    ```bash
-    git clone <URL-del-repositorio>
-    cd <nombre-del-repositorio>
-    ```
+### Opción 1: Usando uv (Recomendado - Más rápido)
 
-2.  **Crea un entorno virtual:**
-    ```bash
-    python -m venv venv
-    ```
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/ASamiraJasbonM/Pose-Detection.git
+cd Pose-Detection
 
-3.  **Activa el entorno virtual:**
-    -   **Windows:**
-        ```bash
-        .\venv\Scripts\activate
-        ```
-    -   **macOS/Linux:**
-        ```bash
-        source venv/bin/activate
-        ```
+# 2. Cambiar a la rama refactor
+git checkout refactor
 
-4.  **Instala las dependencias:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+# 3. Instalar uv (si no lo tienes)
+# Windows PowerShell:
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 4. Crear ambiente virtual e instalar dependencias
+uv venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
+
+uv pip install -r requirements.txt
+```
+
+### Opción 2: Usando pip tradicional
+
+```bash
+# 1-2. Igual que arriba
+
+# 3. Crear ambiente virtual
+python -m venv .venv
+
+# 4. Activar ambiente virtual
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
+
+# 5. Instalar dependencias
+pip install -r requirements.txt
+```
 
 ## Uso
 
-Para ejecutar la aplicación, asegúrate de tener el entorno virtual activado y luego ejecuta el siguiente comando:
+### Interfaz Gráfica
 
 ```bash
-python Perfect-Tesis-pose-detection.py
+python -m src.main
 ```
 
-Esto abrirá la interfaz gráfica de usuario desde donde podrás acceder a todas las funcionalidades.
+Esto abrirá la interfaz gráfica desde donde podrás:
+- Detectar poses en tiempo real
+- Analizar videos pregrabados
+- Generar reportes y gráficas
+- Exportar resultados
+
+### Línea de Comandos (próximamente)
+
+```bash
+# Procesar un video específico
+python -m src.main --input mi_video.mp4 --output resultados/
+
+# Modo batch (sin GUI)
+python -m src.main --no-gui --input video.avi
+```
+
+## Estructura del Proyecto
+
+```
+Pose-Detection/
+├── src/                    # Código fuente modular
+│   ├── __init__.py
+│   ├── main.py            # Punto de entrada principal
+│   ├── gui.py             # Interfaz gráfica
+│   ├── video.py           # Procesamiento de video
+│   ├── angles.py          # Cálculo de ángulos
+│   ├── sensors.py         # Detección con MediaPipe
+│   ├── plots.py           # Visualización de datos
+│   └── io.py              # Entrada/salida de archivos
+├── test/                  # Tests automatizados
+│   ├── test_processing.py
+│   └── test_utils.py
+├── Registros/             # Reportes y datos generados
+├── requirements.txt       # Dependencias del proyecto
+├── Dockerfile            # Configuración Docker
+└── README.md             # Este archivo
+```
+
+## Tests
+
+Ejecutar la suite de tests:
+
+```bash
+pytest test/
+```
+
+Ejecutar tests con cobertura:
+
+```bash
+pytest test/ --cov=src
+```
 
 ## Docker
 
-También puedes construir una imagen de Docker para este proyecto.
+### Construir imagen:
 
-1.  **Construye la imagen:**
-    ```bash
-    docker build -t pose-detection-app .
-    ```
+```bash
+docker build -t pose-detection-app .
+```
 
-2.  **Ejecuta el contenedor:**
-    ```bash
-    docker run -it pose-detection-app
-    ```
+### Ejecutar contenedor:
 
-**Nota Importante sobre Docker:**
+```bash
+docker run -it pose-detection-app
+```
 
-La aplicación utiliza una interfaz gráfica (Tkinter) y requiere acceso a la cámara web, lo cual no es soportado por defecto en los contenedores de Docker. Para que la GUI y la cámara funcionen, se necesita configuración avanzada como reenvío de X11 y pasar el dispositivo de la cámara al contenedor. Los comandos anteriores crearán y ejecutarán el contenedor, pero es probable que la aplicación falle debido a estas limitaciones.
+**NOTA sobre Docker:**
+La aplicación usa GUI (Tkinter) y requiere acceso a cámara. Para usar en Docker necesitas:
+- Configurar X11 forwarding para GUI
+- Pasar dispositivo de cámara al contenedor con `--device=/dev/video0`
 
 ## Dependencias Principales
 
-- `opencv-python`
-- `mediapipe`
-- `numpy`
-- `pandas`
-- `matplotlib`
-- `moviepy`
-- `Pillow`
-- `scikit-learn`
-- `openpyxl`
+- **opencv-python** / **opencv-contrib-python**: Procesamiento de video
+- **mediapipe**: Detección de poses
+- **numpy**: Operaciones numéricas
+- **pandas**: Análisis de datos
+- **matplotlib**: Visualización
+- **ttkbootstrap**: Interfaz gráfica moderna
+- **moviepy**: Edición de video
+- **pillow**: Procesamiento de imágenes
+
+## Funcionalidades Detalladas
+
+### Detección de Ángulos
+
+El sistema calcula ángulos en las siguientes articulaciones:
+- **Hombros** (izquierdo y derecho)
+- **Codos** (izquierdo y derecho)
+- **Muñecas** (izquierda y derecha)
+
+En tres planos diferentes:
+- **XY** (plano frontal)
+- **XZ** (plano sagital)
+- **ZY** (plano transversal)
+
+### Reportes Estadísticos
+
+Para cada articulación y plano, se generan:
+- Media y desviación estándar
+- Valores mínimos y máximos
+- Aceleraciones calculadas
+- Gráficas de evolución temporal
+
+## Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature:
+   ```bash
+   git checkout -b feature/nueva-funcionalidad
+   ```
+3. Haz commit de tus cambios:
+   ```bash
+   git commit -m 'Agrega nueva funcionalidad'
+   ```
+4. Push a la rama:
+   ```bash
+   git push origin feature/nueva-funcionalidad
+   ```
+5. Abre un Pull Request
+
+### Guidelines para contribuir:
+
+- Escribe tests para nuevas funcionalidades
+- Documenta funciones con docstrings
+- Sigue PEP 8 para estilo de código
+- Actualiza el README si es necesario
+
+## Changelog
+
+### v2.0.0 - Refactorización (rama refactor)
+- Reorganización en arquitectura modular
+- Implementación de tests automatizados
+- Limpieza y optimización de dependencias
+- Interfaz gráfica mejorada con ttkbootstrap
+- Corrección de bugs de versiones anteriores
+- Documentación actualizada
+
+### v1.0.0 - Versión inicial (rama main)
+- Detección básica de poses
+- Interfaz gráfica inicial
+- Cálculo de ángulos básicos
+
+## Autores
+
+- **Adriana Samira** - Desarrollo Sistema 
+- **Camilo Guerrero** - Refactorización - GRPC
+- **Cesar Nieto** - CI/CD
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## Agradecimientos
+
+- [MediaPipe](https://google.github.io/mediapipe/) por la tecnología de detección de poses
+- [OpenCV](https://opencv.org/) por el procesamiento de video
+- [ttkbootstrap](https://ttkbootstrap.readthedocs.io/) por la interfaz moderna
+- Comunidad open source por las herramientas y librerías
+
+## Soporte
+
+Si encuentras algún bug o tienes sugerencias:
+- Abre un [Issue](https://github.com/ASamiraJasbonM/Pose-Detection/issues)
+- Contacta a los maintainers
+
