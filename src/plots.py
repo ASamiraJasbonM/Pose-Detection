@@ -1,6 +1,9 @@
 # src/plots.py
 import matplotlib.pyplot as plt
 from pathlib import Path
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def grafsens(tl, tr, left, right, name_fig, nameim):
     fig, ax = plt.subplots(3, 2)
