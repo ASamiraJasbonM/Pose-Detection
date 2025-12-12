@@ -12,10 +12,13 @@ from PIL import Image, ImageTk
 import imutils
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video import fx as vfx
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from .io import sailor, figname, archi, REGISTROS, PROJECT_ROOT
-from .angles import angulosxy, angulosxz, anguloszy
-from .plots import grafangle
+from io_module import sailor, figname, archi, REGISTROS, PROJECT_ROOT
+from angles import angulosxy, angulosxz, anguloszy
+from plots import grafangle
 
 # Variables globales (necesarias para compartir estado)
 cap = None

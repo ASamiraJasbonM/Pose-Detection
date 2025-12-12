@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package poseanalysis;
+
+// Servicio principal
+service PoseAnalysisService {
+    // Procesamiento de video en tiempo real (streaming)
+    rpc ProcessVideoStream (stream VideoFrame) returns (stream ProcessedResult);
+    
+    // Procesamiento de archivo de video
+    rpc ProcessVideoFile (VideoFileRequest) returns (VideoAnalysisResult);
+    
+    // Procesamiento de datos de sensores
+    rpc ProcessSensorData (stream SensorData) returns (stream SensorAnalysis);
+    
+    // Cálculo de ángulos por lote
+    rpc CalculateAngles (AngleCalculationRequest) returns (AngleResults);
+}
+
+// ============ DEFINICIONES DE MENSAJES ============
+
+// Para streaming de video
+message VideoFrame {
+    bytes frame_data = 1;       // Frame en formato JPEG/PNG
+    int64 timestamp = 2;        // Marca de tiempo
+    int32 frame_number = 3;     // Número de frame
+}
+
+message ProcessedResult {
+    repeated Landmark landmarks = 1;
+    repeated Angle angles = 2;
+    int64 processing_time_ms = 3;
+}
+
+message Landmark {
+    string name = 1;
+    float x = 2;
+    float y = 3;
+    float z = 4;
+    float visibility = 5;
+}
+
+message Angle {
+    string joint_name = 1;      // "left_shoulder", "right_elbow"
+    float angle_xy = 2;
+    float angle_xz = 3;
+    float angle_zy = 4;
+    float confidence = 5;
+}
+
+// Para archivos de video
+message VideoFileRequest {
+    string file_path = 1;
+    string processing_mode = 2;        // "normal", "slow_motion"
+    repeated string planes = 3;        // ["xy", "xz", "zy"]
+}
+
+message VideoAnalysisResult {
+    string file_path = 1;
+    int32 total_frames = 2;
+    bool success = 3;
+    VideoStatistics statistics = 4;
+    string error_message = 5;
+}
+
+message VideoStatistics {
+    float mean_angle_xy = 1;
+    float max_acceleration = 2;
+    float processing_time_seconds = 3;
+}
+
+// Para sensores IMU
+message SensorData {
+    repeated float accelerometer = 1;  // [x, y, z]
+    repeated float gyroscope = 2;      // [x, y, z]
+    int64 timestamp = 3;
+    string sensor_id = 4;              // "left_arm", "right_arm"
+}
+
+message SensorAnalysis {
+    int64 timestamp = 1;
+    string sensor_id = 2;
+    float rms_value = 3;
+    float quality_score = 4;
+    repeated float calculated_angles = 5;  // Ángulos derivados
+}
+
+// Para cálculo de ángulos por lote
+message AngleCalculationRequest {
+    repeated Landmark landmarks = 1;
+    string plane = 2;  // "xy", "xz", "zy"
+    repeated string joints_to_calculate = 3;  // ["shoulder", "elbow", "wrist"]
+}
+
+message AngleResults {
+    repeated Angle angles = 1;
+    float processing_time_ms = 2;
+    int32 total_joints_calculated = 3;
+}

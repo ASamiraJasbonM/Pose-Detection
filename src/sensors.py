@@ -4,20 +4,35 @@ import shutil
 import matplotlib.pyplot as plt
 from pathlib import Path
 from tkinter import filedialog
-from .io import figname, archi, REGISTROS, PROJECT_ROOT
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from io_module import figname, archi, REGISTROS, PROJECT_ROOT
 
 # Importar variables desde video.py
-from .video import XY_AC, XY_DEG, XZ_AC, XZ_DEG, ZY_AC, ZY_DEG
+from video import XY_AC, XY_DEG, XZ_AC, XZ_DEG, ZY_AC, ZY_DEG
 
 def RMSdtf(A_art: pd.DataFrame):
-    """Calcula el valor RMS de un DataFrame"""
+    """
+    Calcula el valor RMS (Root Mean Square) por fila de un DataFrame.
+    CORREGIDO: Ahora calcula correctamente sqrt(mean(squares))
+    """
     A_art = A_art.copy()
     A_art.fillna(0, inplace=True)
+    
+    # 1. Elevar al cuadrado cada valor
     powtwo = A_art.pow(2)
-    powtwo.fillna(0, inplace=True)
-    s_pow = A_art.sum(axis=1)
-    rms = s_pow.pow(1./2)
-    return rms.dropna()
+    
+    # 2. Calcular la media de los cuadrados por fila (promedio de columnas)
+    # Para un DataFrame, mean(axis=1) calcula el promedio por fila
+    mean_squares = powtwo.mean(axis=1)
+    
+    # 3. Calcular la raíz cuadrada de la media de cuadrados
+    rms = mean_squares.pow(0.5)  # Equivalente a sqrt(mean_squares)
+    
+    # 4. Eliminar NaN y retornar
+    rms = rms.dropna()
+    return rms
 
 def get_sensor_var():
     """Procesa archivos CSV de sensores"""

@@ -1,6 +1,9 @@
 # src/main.py
-from .gui import build_main_window
-from .logger import setup_logger
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gui import build_main_window
+from logger import setup_logger
 
 # Configurar logger
 logger = setup_logger()
