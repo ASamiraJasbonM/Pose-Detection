@@ -124,13 +124,13 @@ pytest test/ --cov=src
 ### Construir imagen:
 
 ```bash
-docker build -t pose-detection-app .
+docker build -t pose-detector .
 ```
 
 ### Ejecutar contenedor:
 
 ```bash
-docker run -it pose-detection-app
+docker run -it pose-detector
 ```
 
 **NOTA sobre Docker:**

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema de Análisis de Movimiento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 2rem; background-color: #f8f9fa; }
+        .container { max-width: 1300px; }
+        .video-container { border: 1px solid #dee2e6; min-height: 480px; background: #000; border-radius: .3rem; }
+        .controls-section { margin-bottom: 1.5rem; padding: 1.5rem; background: #fff; border-radius: .3rem; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .btn-group-vertical .btn { margin-bottom: 5px; }
+        #status { margin-top: 1rem; font-weight: bold; }
+        h1, h2 { color: #343a40; }
+        h2 { border-bottom: 2px solid #dee2e6; padding-bottom: .5rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4 text-center">Sistema de Análisis de Movimiento <span id="grpc-status-badge" class="badge bg-secondary">Cargando...</span></h1>
+        <div class="row">
+            <div class="col-md-5">
+                <div class="controls-section">
+                    <h2>Control de Cámara</h2>
+                    <button id="start-cam" class="btn btn-primary">Iniciar Cámara</button>
+                    <button id="stop-cam" class="btn btn-secondary">Finalizar Cámara</button>
+                </div>
+                <div class="controls-section">
+                    <h2>Registro desde Cámara</h2>
+                    <p class="text-muted small">Inicia una grabación de 10 segundos para análisis. Verás los marcadores en el video en vivo.</p>
+                    <div class="btn-group-vertical w-100">
+                        <button onclick="postRequest('/camera/register/xy')" class="btn btn-info">Registro XY</button>
+                        <button onclick="postRequest('/camera/register/xz')" class="btn btn-info">Registro XZ</button>
+                        <button onclick="postRequest('/camera/register/zy')" class="btn btn-info">Registro ZY</button>
+                    </div>
+                </div>
+                <div class="controls-section">
+                    <h2>Procesar Archivos de Video</h2>
+                    <div class="mb-3">
+                        <label for="video-file" class="form-label">Cargar un video</label>
+                        <input class="form-control" type="file" id="video-file" accept="video/*">
+                        <button onclick="uploadFile('/video/load', 'video-file')" class="btn btn-success mt-2">Cargar Video</button>
+                        <button onclick="uploadFile('/video/slow', 'video-file')" class="btn btn-warning mt-2">Video Lento</button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="multiple-videos" class="form-label">Cargar múltiples videos</label>
+                        <input class="form-control" type="file" id="multiple-videos" accept="video/*" multiple>
+                        <button onclick="uploadMultipleFiles('/video/multiple', 'multiple-videos')" class="btn btn-primary mt-2">Múltiples Videos</button>
+                    </div>
+                </div>
+                <div class="controls-section">
+                    <h2>Procesar Datos de Sensores</h2>
+                     <div class="mb-3">
+                        <label for="sensor-file-left" class="form-label">Sensor Izquierdo (CSV)</label>
+                        <input class="form-control" type="file" id="sensor-file-left" accept=".csv">
+                     </div>
+                     <div class="mb-3">
+                        <label for="sensor-file-right" class="form-label">Sensor Derecho (CSV)</label>
+                        <input class="form-control" type="file" id="sensor-file-right" accept=".csv">
+                    </div>
+                    <button onclick="uploadSensorFiles()" class="btn btn-dark mt-2">Cargar Sensores</button>
+                </div>
+                 <div class="controls-section">
+                    <h2>Otras Acciones</h2>
+                    <button onclick="postRequest('/files/move_registros')" class="btn btn-light">Mover Carpeta Registros</button>
+                    <button onclick="postRequest('/grpc/test')" class="btn btn-light">Probar gRPC</button>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h2>Video en Vivo</h2>
+                <div class="video-container d-flex align-items-center justify-content-center">
+                    <img id="video-feed" src="" class="w-100">
+                </div>
+                <div id="status" class="alert alert-secondary mt-3">Listo</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('grpc-status-badge');
+                    if (data.grpc_enabled) {
+                        badge.textContent = 'gRPC Activado';
+                        badge.className = 'badge bg-success';
+                    } else {
+                        badge.textContent = 'gRPC Desactivado';
+                        badge.className = 'badge bg-danger';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                    const badge = document.getElementById('grpc-status-badge');
+                    badge.textContent = 'Estado Desconocido';
+                    badge.className = 'badge bg-warning';
+                });
+        });
+
+        const videoFeed = document.getElementById('video-feed');
+        const startBtn = document.getElementById('start-cam');
+        const stopBtn = document.getElementById('stop-cam');
+        const statusEl = document.getElementById('status');
+
+        startBtn.onclick = () => {
+            statusEl.textContent = 'Iniciando cámara...';
+            statusEl.className = 'alert alert-info';
+            fetch('/camera/start', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.message.includes("success")) {
+                        videoFeed.src = '/video_feed';
+                        statusEl.textContent = 'Cámara iniciada.';
+                        statusEl.className = 'alert alert-success';
+                    } else {
+                        statusEl.textContent = data.message;
+                        statusEl.className = 'alert alert-warning';
+                    }
+                });
+        };
+
+        stopBtn.onclick = () => {
+            statusEl.textContent = 'Deteniendo cámara...';
+            statusEl.className = 'alert alert-info';
+            fetch('/camera/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    videoFeed.src = '';
+                    statusEl.textContent = data.message;
+                    statusEl.className = 'alert alert-warning';
+                });
+        };
+
+        async function postRequest(url, body = {}) {
+            statusEl.textContent = `Enviando petición a ${url}...`;
+            statusEl.className = 'alert alert-info';
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+                statusEl.textContent = 'Respuesta: ' + (result.message || JSON.stringify(result));
+                statusEl.className = response.ok ? 'alert alert-success' : 'alert alert-danger';
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = 'Error en la petición: ' + error;
+                statusEl.className = 'alert alert-danger';
+            }
+        }
+
+        async function uploadFile(url, fileInputId) {
+            const fileInput = document.getElementById(fileInputId);
+            if (fileInput.files.length === 0) { alert('Por favor, selecciona un archivo.'); return; }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            statusEl.textContent = `Subiendo archivo a ${url}...`;
+            statusEl.className = 'alert alert-info';
+            try {
+                const response = await fetch(url, { method: 'POST', body: formData });
+                const result = await response.json();
+                statusEl.textContent = 'Respuesta: ' + (result.message || JSON.stringify(result));
+                statusEl.className = response.ok ? 'alert alert-success' : 'alert alert-danger';
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = 'Error subiendo archivo: ' + error;
+                statusEl.className = 'alert alert-danger';
+            }
+        }
+        
+        async function uploadMultipleFiles(url, fileInputId) {
+            const fileInput = document.getElementById(fileInputId);
+            if (fileInput.files.length === 0) { alert('Por favor, selecciona uno o más archivos.'); return; }
+            const formData = new FormData();
+            for(const file of fileInput.files){ formData.append('files', file); }
+            
+            statusEl.textContent = `Subiendo ${fileInput.files.length} archivos...`;
+            statusEl.className = 'alert alert-info';
+            try {
+                const response = await fetch(url, { method: 'POST', body: formData });
+                const result = await response.json();
+                statusEl.textContent = 'Respuesta: ' + (result.message || JSON.stringify(result));
+                statusEl.className = response.ok ? 'alert alert-success' : 'alert alert-danger';
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = 'Error subiendo archivos: ' + error;
+                statusEl.className = 'alert alert-danger';
+            }
+        }
+
+        async function uploadSensorFiles() {
+            const leftInput = document.getElementById('sensor-file-left');
+            const rightInput = document.getElementById('sensor-file-right');
+            if (leftInput.files.length === 0 || rightInput.files.length === 0) {
+                alert('Por favor, selecciona ambos archivos de sensores (izquierdo y derecho).');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file_left', leftInput.files[0]);
+            formData.append('file_right', rightInput.files[0]);
+
+            statusEl.textContent = `Subiendo archivos de sensores...`;
+            statusEl.className = 'alert alert-info';
+            try {
+                const response = await fetch('/sensors/load', { method: 'POST', body: formData });
+                const result = await response.json();
+                statusEl.textContent = 'Respuesta: ' + (result.message || JSON.stringify(result));
+                statusEl.className = response.ok ? 'alert alert-success' : 'alert alert-danger';
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = 'Error subiendo archivos de sensores: ' + error;
+                statusEl.className = 'alert alert-danger';
+            }
+        }
+    </script>
+</body>
+</html>

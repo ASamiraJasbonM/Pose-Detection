@@ -15,100 +15,87 @@ from video import XY_AC, XY_DEG, XZ_AC, XZ_DEG, ZY_AC, ZY_DEG
 def RMSdtf(A_art: pd.DataFrame):
     """
     Calcula el valor RMS (Root Mean Square) por fila de un DataFrame.
-    CORREGIDO: Ahora calcula correctamente sqrt(mean(squares))
     """
     A_art = A_art.copy()
     A_art.fillna(0, inplace=True)
-    
-    # 1. Elevar al cuadrado cada valor
     powtwo = A_art.pow(2)
-    
-    # 2. Calcular la media de los cuadrados por fila (promedio de columnas)
-    # Para un DataFrame, mean(axis=1) calcula el promedio por fila
     mean_squares = powtwo.mean(axis=1)
-    
-    # 3. Calcular la raíz cuadrada de la media de cuadrados
-    rms = mean_squares.pow(0.5)  # Equivalente a sqrt(mean_squares)
-    
-    # 4. Eliminar NaN y retornar
+    rms = mean_squares.pow(0.5)
     rms = rms.dropna()
     return rms
 
-def get_sensor_var():
-    """Procesa archivos CSV de sensores"""
-    filenameleft = filedialog.askopenfilename(
-        title="Seleccionar CSV sensor izquierdo",
-        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
-    )
-    
-    if not filenameleft:
+def process_sensor_files(left_csv_path: str, right_csv_path: str):
+    """
+    Processes sensor data from given left and right CSV file paths.
+    """
+    if not os.path.exists(left_csv_path) or not os.path.exists(right_csv_path):
+        print("Error: One or both sensor files not found.")
         return
-        
-    df0 = pd.read_csv(filenameleft)
-    
-    filenameright = filedialog.askopenfilename(
-        title="Seleccionar CSV sensor derecho",
-        filetypes=[("CSV files", "*.csv")]
-    )
-    
-    if not filenameright:
-        return
-        
-    df1 = pd.read_csv(filenameright)
-    
-    # Procesar datos izquierdos
+
+    df0 = pd.read_csv(left_csv_path)
+    df1 = pd.read_csv(right_csv_path)
+
+    # Process left sensor data
     aceL = pd.DataFrame()
-    if 'gx_deg/s' in df0.columns:
-        aceL[0] = df0['gx_deg/s']
-    if 'gy_deg/s' in df0.columns:
-        aceL[1] = df0['gy_deg/s']
-    if 'gz_deg/s' in df0.columns:
-        aceL[2] = df0['gz_deg/s']
+    if 'gx_deg/s' in df0.columns: aceL[0] = df0['gx_deg/s']
+    if 'gy_deg/s' in df0.columns: aceL[1] = df0['gy_deg/s']
+    if 'gz_deg/s' in df0.columns: aceL[2] = df0['gz_deg/s']
     
     degL = pd.DataFrame()
-    if 'x_deg' in df0.columns:
-        degL[0] = df0['x_deg']
-    if 'y_deg' in df0.columns:
-        degL[1] = df0['y_deg']
-    if 'z_deg' in df0.columns:
-        degL[2] = df0['z_deg']
+    if 'x_deg' in df0.columns: degL[0] = df0['x_deg']
+    if 'y_deg' in df0.columns: degL[1] = df0['y_deg']
+    if 'z_deg' in df0.columns: degL[2] = df0['z_deg']
     
-    # Procesar datos derechos
+    # Process right sensor data
     aceR = pd.DataFrame()
-    if 'gx_deg/s' in df1.columns:
-        aceR[0] = df1['gx_deg/s']
-    if 'gy_deg/s' in df1.columns:
-        aceR[1] = df1['gy_deg/s']
-    if 'gz_deg/s' in df1.columns:
-        aceR[2] = df1['gz_deg/s']
+    if 'gx_deg/s' in df1.columns: aceR[0] = df1['gx_deg/s']
+    if 'gy_deg/s' in df1.columns: aceR[1] = df1['gy_deg/s']
+    if 'gz_deg/s' in df1.columns: aceR[2] = df1['gz_deg/s']
     
     degR = pd.DataFrame()
-    if 'x_deg' in df1.columns:
-        degR[0] = df1['x_deg']
-    if 'y_deg' in df1.columns:
-        degR[1] = df1['y_deg']
-    if 'z_deg' in df1.columns:
-        degR[2] = df1['z_deg']
+    if 'x_deg' in df1.columns: degR[0] = df1['x_deg']
+    if 'y_deg' in df1.columns: degR[1] = df1['y_deg']
+    if 'z_deg' in df1.columns: degR[2] = df1['z_deg']
     
-    # Calcular RMS
+    # Calculate RMS
     rms_aceL = RMSdtf(aceL) if not aceL.empty else pd.Series()
     rms_degL = RMSdtf(degL) if not degL.empty else pd.Series()
     rms_aceR = RMSdtf(aceR) if not aceR.empty else pd.Series()
     rms_degR = RMSdtf(degR) if not degR.empty else pd.Series()
     
-    # Crear reportes
+    # Create reports
     wo = REGISTROS / 'sensores'
     wo.mkdir(parents=True, exist_ok=True)
     
-    # Reporte de ángulos
+    # Angle report
     if not degL.empty or not degR.empty:
         [Report_Angles, Report_Anglesplace] = figname(str(wo), 'Report_Angles.xlsx')
         Report_deg = pd.DataFrame()
-        # ... (código para llenar Report_deg)
+        # ... (code to fill Report_deg)
         Report_deg.to_excel(Report_Angles)
         shutil.move(Report_Angles, Report_Anglesplace)
     
-    print("Sensores procesados correctamente")
+    print("Sensor data processed successfully.")
+
+def get_sensor_var():
+    """
+    Opens file dialogs to select sensor CSVs and processes them.
+    (Legacy function for backward compatibility)
+    """
+    filenameleft = filedialog.askopenfilename(
+        title="Select left sensor CSV",
+        filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+    )
+    if not filenameleft: return
+        
+    filenameright = filedialog.askopenfilename(
+        title="Select right sensor CSV",
+        filetypes=[("CSV files", "*.csv")]
+    )
+    if not filenameright: return
+    
+    process_sensor_files(filenameleft, filenameright)
+
 
 def calculoAC():
     """Calcula estadísticas de aceleración RMS entre planos"""
@@ -168,7 +155,7 @@ def calculoAC():
             report_data.append(stats)
     
     plt.savefig(namfile, dpi=100)
-    plt.show()
+    # plt.show() # In a server context, showing plots is not ideal
     
     # Guardar reporte
     if report_data:

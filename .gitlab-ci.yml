@@ -1,0 +1,52 @@
+# Usar una imagen de Python reciente como base para los jobs
+default:
+  image: python:3.9
+
+# Definir las fases del pipeline
+stages:
+  - install
+  - test
+  - build_and_push
+
+# Cache para las dependencias de pip para acelerar las ejecuciones
+cache:
+  key:
+    files:
+      - requirements.txt
+  paths:
+    - .cache/pip
+
+# Fase para instalar dependencias
+install_dependencies:
+  stage: install
+  script:
+    - pip install --cache-dir .cache/pip -r requirements.txt
+    # Instala el paquete local (de la carpeta src) y pytest
+    - pip install .
+    - pip install pytest
+
+# Fase para ejecutar las pruebas
+run_tests:
+  stage: test
+  needs: [install_dependencies] # Asegura que las dependencias se instalaron primero
+  script:
+    # Ejecuta pytest en el directorio de tests
+    - pytest tests/
+
+# Fase para construir y publicar la imagen Docker
+build_and_push_docker:
+  stage: build_and_push
+  # Usar una imagen de Docker con Docker-in-Docker (dind) para poder construir imágenes
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    # Iniciar sesión en Docker Hub usando variables de CI/CD de GitLab
+    # DEBES configurar DOCKER_USER y DOCKER_PASSWORD en GitLab
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+  script:
+    - docker build -t sailorasjm1996/pose-detection:latest .
+    - docker push sailorasjm1996/pose-detection:latest
+  rules:
+    # Esta fase solo se ejecuta cuando hay un commit a la rama 'main'
+    - if: '$CI_COMMIT_BRANCH == "main"'

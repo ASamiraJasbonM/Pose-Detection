@@ -29,8 +29,8 @@ def run_all_tests():
         
         try:
             # Ejecutar el archivo como módulo
-            with open(test_file, 'r') as f:
-                exec(f.read(), {'__name__': '__main__'})
+            with open(test_file, 'r', encoding='utf-8') as f:
+                exec(f.read(), {'__name__': '__main__', '__file__': test_file})
         except Exception as e:
             print(f"❌ Error ejecutando {test_file}: {e}")
             all_passed = False

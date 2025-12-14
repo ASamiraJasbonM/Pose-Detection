@@ -28,6 +28,27 @@ from video import (
 )
 from io_module import create_files, mover_carpt
 from sensors import get_sensor_var
+# src/video.py
+import cv2
+import mediapipe as mp
+import numpy as np
+import pandas as pd
+import os
+import shutil
+from pathlib import Path
+from datetime import datetime
+from tkinter import filedialog
+from PIL import Image, ImageTk
+import imutils
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.video import fx as vfx
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from io_module import sailor, figname, archi, REGISTROS, PROJECT_ROOT
+from angles import angulosxy, angulosxz, anguloszy
+from plots import grafangle
 
 # En src/gui.py, añade esto cerca del inicio:
 try:

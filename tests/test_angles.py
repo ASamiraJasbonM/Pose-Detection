@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Pruebas básicas para el módulo angles.py
 """

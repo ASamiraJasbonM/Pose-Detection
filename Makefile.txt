@@ -1,0 +1,5 @@
+cod:
+	uv run src/main.py
+.PHONY: test
+test:
+	uv run pytest -v
